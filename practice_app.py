@@ -11,13 +11,17 @@ import base64
 import random
 import time
 
-from flask import Flask, request
+from flask import Flask, request, redirect
 
 app = Flask(__name__)
 
 users = {
     "test": ["test13572468"]    # username  password
 }
+
+# 新建一个数据结构
+auth_code = {}
+
 
 METHODS = ['GET', 'POST']    # for simplify setting
 
@@ -80,6 +84,28 @@ def test():
         return 'Verified'
     else:
         return 'Error'
+
+
+# 实现重定向功能,将访问/client/login的请求重定向到/oauth
+@app.route('/client/login', methods=['POST', 'GET'])
+def client_login():
+    uri = "http://localhost:5000/oauth"
+    return redirect(uri)
+
+
+@app.route('/oauth', methods=['POST', 'GET'])
+def oauth():
+    if request.args.get('code'):
+        if auth_code.get(int(request.args.get('code'))) == request.args.get('redirect_uri'):
+            return gen_token(request.args.get('client_id'))
+    return "Please Login"
+
+
+# 编写生成授权码
+def gen_code(uri):
+    code = random.randint(0, 10000)
+    auth_code[code] = uri
+    return code
 
 
 if __name__ == '__main__':
